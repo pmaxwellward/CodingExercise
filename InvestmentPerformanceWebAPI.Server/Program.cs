@@ -68,4 +68,7 @@ app.MapControllers();
 
 app.MapFallbackToFile("/index.html");
 
+// health check for client
+app.MapGet("/healthz", () => Results.Ok("ok"));
+
 app.Run();

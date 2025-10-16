@@ -1,28 +1,48 @@
-# Coding Exercise
-> This repository holds coding exercises for candidates going through the hiring process.
+﻿# How to Run (Visual Studio & CLI)
 
-You should have been assigned one of the coding exercises in this list.  More details can be found in the specific md file for that assignment.
+## Visual Studio (both projects as startup projects)
 
-Instructions: Fork this repository, do the assigned work, and submit a pull request for review.
+1. Open the solution in **Visual Studio 2022**.
+2. Right-click the solution ➜ **Set Startup Projects…**  
+   - Choose **Multiple startup projects**.  
+   - Set **InvestmentPerformanceWebAPI.Server** ➜ **Start**.  
+   - Set **InvestmentPerformanceWebAPI.Client** ➜ **Start**.
+3. Press **F5** (or ▶️ Run).  
+   - The API will run on `https://localhost:7065` (and `http://localhost:5140`).  
+   - The Vue app (Vite) will run on its dev port and proxy `/api/*` to the API.
 
-[Investment Performance Web API](InvestmentPerformanceWebAPI.md#investment-performance-web-api)
+> Tip: If PowerShell blocks `npm`, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, restart the terminal, then run `npm install`.
 
-[Online Ordering SQL](OnlineOrderingSQL.md#online-ordering)
+---
 
-# License
+## Command Line (dotnet CLI + npm)
 
+### 1) Start the API (pin ports)
+```bash
+cd InvestmentPerformanceWebAPI.Server
+dotnet restore
+dotnet dev-certs https --trust
+dotnet run --urls "https://localhost:7065;http://localhost:5140"
 ```
-Copyright 2021 Nuix
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-   http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+### 2) In another terminal, start the dev server
+```bash 
+cd InvestmentPerformanceWebAPI.client
+npm install
+npm run dev
 ```
+
+Visit the Vue dev server URL it prints (e.g., https://localhost:56256).
+Calls to /api/* are proxied to https://localhost:7065.
+
+### API Endpoints - (base localhost:56256)
+
+| Method | Endpoint | Description |
+|---------|-----------|-------------|
+| **GET** | `/api/users` | Returns all users in the database. <br>*(Acceptable User IDs: 1 & 2)* |
+| **GET** | `/api/users/{user.id}/investments` | Returns all investments for a user. <br>Each item includes **Investment ID** and **Name**. |
+| **GET** | `/api/users/{user.id}/investments/{investment.id}` | Returns detailed investment information (shares, cost basis, current value, term, gain/loss). |
+
+
+I used a Vue front end because it was mentioned as part of your common stack. I have also included global exception handling, logging, and unit tests.
+
+P. Maxwell Ward - 2025

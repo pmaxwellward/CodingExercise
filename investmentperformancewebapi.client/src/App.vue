@@ -131,10 +131,44 @@
     return term === "LongTerm" ? "Long Term" : "Short Term";
   }
 
+  // simple exponential backoff: 200ms, 400ms, 800ms, 1600ms, ...
+  async function retryFetch(url: string, init?: RequestInit, retries = 5, baseDelayMs = 200): Promise<Response> {
+    let attempt = 0;
+
+    while (true) {
+      try {
+        const resp = await fetch(url, init);
+
+        // Return immediately if OK
+        if (resp.ok) return resp;
+
+        // Retry on transient statuses
+        if ((resp.status >= 500 || resp.status === 429) && attempt < retries) {
+          await new Promise(r => setTimeout(r, baseDelayMs * 2 ** attempt));
+          attempt++;
+          continue;
+        }
+
+        // Non-retryable or out of retries
+        return resp;
+      }
+      catch
+      {
+        // Network error (e.g., API not up yet)
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, baseDelayMs * 2 ** attempt));
+          attempt++;
+          continue;
+        }
+      }
+    }
+  }
+
+
   /** Data loaders */
   async function fetchUsers(): Promise<void> {
     try {
-      const resp = await fetch(`/api/users`);
+      const resp = await retryFetch(`/api/users`);
       if (!resp.ok) {
         throw new Error(`Users HTTP ${resp.status}`);
       }
@@ -148,7 +182,7 @@
 
   async function loadInvestmentsForUser(userId: number): Promise<void> {
     try {
-      const resp = await fetch(`/api/users/${userId}/investments`);
+      const resp = await retryFetch(`/api/users/${userId}/investments`);
       if (!resp.ok) {
         throw new Error(`Investments HTTP ${resp.status}`);
       }
@@ -166,7 +200,7 @@
   async function loadDetails(userId: number, investmentId: number): Promise<void> {
     const k = key(userId, investmentId);
     try {
-      const resp = await fetch(`/api/users/${userId}/investments/${investmentId}`);
+      const resp = await retryFetch(`/api/users/${userId}/investments/${investmentId}`);
       if (!resp.ok) {
         throw new Error(`Details HTTP ${resp.status}`);
       }
@@ -181,8 +215,19 @@
     }
   }
 
+  async function waitForApiReady(): Promise<void> {
+    for (let i = 0; i < 20; i++) {
+      try {
+        const r = await fetch("/healthz", { cache: "no-store" });
+        if (r.ok) return;
+      } catch { }
+      await new Promise(r => setTimeout(r, 250));
+    }
+  }
+
   /** Orchestrate: users → investments → details (all visible at once) */
   onMounted(async () => {
+    await waitForApiReady();
     loading.value = true;
     error.value = "";
     await fetchUsers();
@@ -209,7 +254,7 @@
     max-width: 1024px;
     margin: 2rem auto;
     padding: 0 1rem;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    font-family: monospace;
   }
 
   h1 {
@@ -238,6 +283,7 @@
     border: 1px solid #e5e7eb;
     border-radius: 12px;
     padding: 1rem;
+    background: #202020;
   }
 
   .user-header {
