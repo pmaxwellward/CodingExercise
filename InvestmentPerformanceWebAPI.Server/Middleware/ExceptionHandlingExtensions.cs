@@ -1,5 +1,4 @@
-﻿// Middleware/ExceptionHandlingExtensions.cs
-using System.Net;
+﻿using System.Net;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
