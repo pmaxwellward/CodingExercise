@@ -1,4 +1,6 @@
 using InvestmentPerformanceWebAPI.Server.Database.Context;
+using InvestmentPerformanceWebAPI.Server.Database.Repository;
+using InvestmentPerformanceWebAPI.Server.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,19 +18,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IInvestmentRepository, InvestmentRepository>();
+builder.Services.AddScoped<IInvestmentQueryService, InvestmentQueryService>();
+builder.Services.AddSingleton<IPriceService, InMemoryPriceService>();
+
+
 var app = builder.Build();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// Configure the HTTP request pipeline.
-/*
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-*/
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

@@ -1,11 +1,13 @@
 ﻿using InvestmentPerformanceWebAPI.Server.Database.Models;
-using InvestmentPerformanceWebAPI.Server.Database.Models.YourProject.Database.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace InvestmentPerformanceWebAPI.Server.Database.Context {
     public sealed class AppDbContext : DbContext {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) {
+        }
+        public DbSet<Investment> Investments {
+            get { return Set<Investment>(); }
         }
 
         public DbSet<User> Users {
@@ -32,46 +34,71 @@ namespace InvestmentPerformanceWebAPI.Server.Database.Context {
                 );
             });
 
-            modelBuilder.Entity<Transaction>(b => {
+            // Investments seed (so InvestmentId in Transactions is valid)
+            modelBuilder.Entity<Investment>(b =>
+            {
+                b.HasData(
+                    // Alice's investments
+                    new Investment {
+                        Id = 1,
+                        UserId = 1,
+                        Name = "ACME"
+                    },
+                    new Investment {
+                        Id = 2,
+                        UserId = 1,
+                        Name = "BETA"
+                    },
 
+                    // Bob's investments
+                    new Investment {
+                        Id = 3,
+                        UserId = 2,
+                        Name = "BETA"
+                    }
+                );
+            });
+            
+            modelBuilder.Entity<Transaction>(b =>
+            {
                 b.HasData(
                     // --- Alice (UserId = 1) ---
                     new Transaction {
                         Id = 1,
                         UserId = 1,
-                        Symbol = "ACME",
+                        InvestmentId = 1,                           // ACME (Alice)
                         Type = TransactionType.Buy,
                         NumberOfShares = (decimal)10.00,
-                        CostBasisPerShare = (decimal)100.00,
+                        PricePerShare = (decimal)100.00,
                         ExecutedAtUtc = new DateTime(2024, 01, 15, 10, 00, 00, DateTimeKind.Utc)
                     },
-                    // Same symbol (ACME) purchased again at a different price
+                    // Same investment bought/sold at different prices
                     new Transaction {
                         Id = 2,
                         UserId = 1,
-                        Symbol = "ACME",
+                        InvestmentId = 1,                           // ACME (Alice)
                         Type = TransactionType.Sell,
                         NumberOfShares = (decimal)3.00,
-                        CostBasisPerShare = (decimal)120.000000,
+                        PricePerShare = (decimal)120.00,
                         ExecutedAtUtc = new DateTime(2024, 12, 01, 15, 30, 00, DateTimeKind.Utc)
                     },
                     new Transaction {
                         Id = 3,
                         UserId = 1,
-                        Symbol = "ACME",
+                        InvestmentId = 1,                           // ACME (Alice)
                         Type = TransactionType.Buy,
-                        NumberOfShares = (decimal)5.000000,
-                        CostBasisPerShare = (decimal)110.000000,
+                        NumberOfShares = (decimal)5.00,
+                        PricePerShare = (decimal)110.00,
                         ExecutedAtUtc = new DateTime(2025, 03, 10, 09, 00, 00, DateTimeKind.Utc)
                     },
 
                     new Transaction {
                         Id = 4,
                         UserId = 1,
-                        Symbol = "BETA",
+                        InvestmentId = 2,                           // BETA (Alice)
                         Type = TransactionType.Buy,
-                        NumberOfShares = (decimal)8.000000,
-                        CostBasisPerShare = (decimal)40.000000,
+                        NumberOfShares = (decimal)8.00,
+                        PricePerShare = (decimal)40.00,
                         ExecutedAtUtc = new DateTime(2025, 05, 20, 14, 30, 00, DateTimeKind.Utc)
                     },
 
@@ -79,34 +106,35 @@ namespace InvestmentPerformanceWebAPI.Server.Database.Context {
                     new Transaction {
                         Id = 5,
                         UserId = 2,
-                        Symbol = "BETA",
+                        InvestmentId = 3,                           // BETA (Bob)
                         Type = TransactionType.Buy,
-                        NumberOfShares = (decimal)20.000000,
-                        CostBasisPerShare = (decimal)45.000000,
+                        NumberOfShares = (decimal)20.00,
+                        PricePerShare = (decimal)45.00,
                         ExecutedAtUtc = new DateTime(2025, 02, 20, 14, 00, 00, DateTimeKind.Utc)
                     },
-                    // Same symbol (BETA) purchased again at a different price
+                    // Same investment again at different price
                     new Transaction {
                         Id = 6,
                         UserId = 2,
-                        Symbol = "BETA",
+                        InvestmentId = 3,                           // BETA (Bob)
                         Type = TransactionType.Buy,
-                        NumberOfShares = (decimal)10.000000,
-                        CostBasisPerShare = (decimal)50.000000,
+                        NumberOfShares = (decimal)10.00,
+                        PricePerShare = (decimal)50.00,
                         ExecutedAtUtc = new DateTime(2025, 06, 01, 16, 45, 00, DateTimeKind.Utc)
                     },
-                    // Partial sell to make the position interesting
+                    // Partial sell
                     new Transaction {
                         Id = 7,
                         UserId = 2,
-                        Symbol = "BETA",
+                        InvestmentId = 3,                           // BETA (Bob)
                         Type = TransactionType.Sell,
-                        NumberOfShares = (decimal)5.000000,
-                        CostBasisPerShare = (decimal)55.000000,
+                        NumberOfShares = (decimal)5.00,
+                        PricePerShare = (decimal)55.00,
                         ExecutedAtUtc = new DateTime(2025, 08, 15, 13, 15, 00, DateTimeKind.Utc)
                     }
                 );
             });
+
         }
     }
 }
